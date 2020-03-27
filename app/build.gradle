@@ -1,0 +1,45 @@
+apply plugin: 'com.android.application'
+def apikeyPropertiesFile = rootProject.file("apikey.properties")
+def apikeyProperties = new Properties()
+apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.2"
+    defaultConfig {
+        // should correspond to key/value pairs inside the file
+        buildConfigField("String", "google_maps_key", apikeyProperties['google_maps_key'])
+        buildConfigField("String", "firebase_link", apikeyProperties['firebase_link'])
+        applicationId "com.example.coronavirustracker"
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-core:17.2.3'
+    implementation 'com.firebase:geofire-android:3.0.0'
+    implementation 'com.google.firebase:firebase-database:19.2.1'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation "com.google.android.gms:play-services-location:15.0.1"
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.google.maps.android:android-maps-utils:1.0.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+
+}
+
+apply plugin: 'com.google.gms.google-services'
+
