@@ -56,6 +56,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.heatmaps.Gradient;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
@@ -92,6 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<LatLng> locationList;
     private TileProvider mProvider;
     private TileOverlay mOverlay;
+    private ClusterManager<MyItem> mClusterManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,26 +152,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getFusedLocationProviderClient(this).requestLocationUpdates(locationRequest, new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
-                LocationResult = locationResult;
+                LocationResult = locationResult;currLatitude = locationResult.getLastLocation().getLatitude();
+                currLongitude = locationResult.getLastLocation().getLongitude();
+
+                // sets the location user's geofire to current location
+                geofire.setLocation(userNode, new GeoLocation(currLatitude,
+                        currLongitude), new GeoFire.CompletionListener() {
+                    @Override
+                    public void onComplete(String key, DatabaseError error) {
+                        if (error != null) {
+                            Log.d(TAG, "There was an error saving the location to GeoFire: " + error);
+                        } else {
+                            Log.d(TAG, "Location saved on server successfully!");
+                            Log.d(userKey, "Location saved on server successfully!");
+                        }
+                    }
+
+                });
+
                 if (locationResult == null) {
                     return;
                 } else {
-                    currLatitude = locationResult.getLastLocation().getLatitude();
-                    currLongitude = locationResult.getLastLocation().getLongitude();
 
-                    // sets the location os user's geofire to current location
-                    geofire.setLocation(userKey, new GeoLocation(currLatitude,
-                            currLongitude), new GeoFire.CompletionListener() {
-                        @Override
-                        public void onComplete(String key, DatabaseError error) {
-                            if (error != null) {
-                                Log.d(TAG, "There was an error saving the location to GeoFire: " + error);
-                            } else {
-                                Log.d(TAG, "Location saved on server successfully!");
-                            }
-                        }
-
-                    });
                     /*if (fusedLocationClient != null) {
                         fusedLocationClient.removeLocationUpdates(locationCallback);
                     }*/
@@ -178,6 +182,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         },
                 Looper.myLooper());
 
+        // Adding cluster manager
+        mClusterManager = new ClusterManager<MyItem>(this, mMap);
+        mClusterManager.setAnimation(false);
+        MyItem marker = new MyItem(0.0, 0.0, "Test", "Test");
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
 
         // Adds all the cases of Coronavirus as markers on map
         mRef.addValueEventListener(new ValueEventListener() {
@@ -222,7 +232,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .radius(100)
                             .strokeColor(Color.BLACK)
                             .fillColor(Color.RED));
-*/
+
+                     // Adds all cases as clusters
+*/                      MyItem marker = new MyItem(lat, lon);
+                        mClusterManager.addItem(marker);
+
                         locationList.add(new LatLng(lat, lon));
 
                         // creates a Geoquery around each case location with 1km radius
@@ -233,12 +247,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     int[] colors = {
 
                             Color.rgb(255, 0, 0),   // red
+                            Color.rgb(0, 96, 255), //blue
                             Color.rgb(28,0,128), // purple
 
                     };
 
                     float[] startPoints = {
-                            0.9f, 1f
+                            0.8f, 0.9f ,1f
                     };
 
                     Gradient gradient = new Gradient(colors, startPoints);
@@ -296,7 +311,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onKeyEntered(String key, GeoLocation location) {
         Log.d(TAG, "Complete entered area");
-        sendNotification("Coronavvirus Tracker", String.format(location.toString(), key));
+        sendNotification("Coronavirus Tracker", "You have entered a Coronavirus zone");
     }
 
     @Override
