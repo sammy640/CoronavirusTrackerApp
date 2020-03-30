@@ -1,7 +1,7 @@
 # CoronavirusTrackerApp
 The Coronavirus Tracker is an Android mobile app that notifies users when they have entered an area that has reports of a Coronavirus case.
 
-![Image description](Desktop)
+![Screenshot ](https://user-images.githubusercontent.com/55412165/77963792-fdb9ae80-72ab-11ea-9dc5-a5a368fac271.png)
 
 # Technologies
 * Java
