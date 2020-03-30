@@ -1,15 +1,22 @@
 apply plugin: 'com.android.application'
 def apikeyPropertiesFile = rootProject.file("apikey.properties")
 def apikeyProperties = new Properties()
-apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
+
+boolean forked = true;
+
+if(!forked) {
+    apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
+}
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
     defaultConfig {
         // should correspond to key/value pairs inside the file
-        buildConfigField("String", "google_maps_key", apikeyProperties['google_maps_key'])
-        buildConfigField("String", "firebase_link", apikeyProperties['firebase_link'])
+        if(!forked) {
+            buildConfigField("String", "google_maps_key", apikeyProperties['google_maps_key'])
+            buildConfigField("String", "firebase_link", apikeyProperties['firebase_link'])
+        }
         applicationId "com.example.coronavirustracker"
         minSdkVersion 16
         targetSdkVersion 29
