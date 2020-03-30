@@ -2,9 +2,10 @@ apply plugin: 'com.android.application'
 def apikeyPropertiesFile = rootProject.file("apikey.properties")
 def apikeyProperties = new Properties()
 
-boolean forked = true;
+//true if this project has been cloned or forked
+boolean clone = true;
 
-if(!forked) {
+if(!clone) {
     apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
 }
 
@@ -12,10 +13,11 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
     defaultConfig {
-        // should correspond to key/value pairs inside the file
-        if(!forked) {
+        //should correspond to key/value pairs inside the file
+        if(clone) {
+            //change "google_maps_key" in strings.xml to your own API key
+        } else {
             buildConfigField("String", "google_maps_key", apikeyProperties['google_maps_key'])
-            buildConfigField("String", "firebase_link", apikeyProperties['firebase_link'])
         }
         applicationId "com.example.coronavirustracker"
         minSdkVersion 16
