@@ -1,3 +1,4 @@
+# Please note this version is deprecated. Please check out the CoronAlert-App repo for the new version (coming soon).
 # Coronavirus Tracker 
 
 ## Table of contents
