@@ -1,3 +1,5 @@
+# Coronavirus Tracker 
+
 ## Table of contents
 * [Introduction](#introduction)
 * [Technologies](#technologies)
