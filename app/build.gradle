@@ -3,9 +3,9 @@ def apikeyPropertiesFile = rootProject.file("apikey.properties")
 def apikeyProperties = new Properties()
 
 //true if this project has been cloned or forked
-boolean clone = true;
+boolean clone = false
 
-if(!clone) {
+if(clone) {
     apikeyProperties.load(new FileInputStream(apikeyPropertiesFile))
 }
 
@@ -14,10 +14,10 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         //should correspond to key/value pairs inside the file
-        if(clone) {
+        if(!clone) {
             //change "google_maps_key" in strings.xml to your own API key
         } else {
-            buildConfigField("String", "google_maps_key", apikeyProperties['google_maps_key'])
+            buildConfigField("String", "google_maps_key", "AIzaSyCM1LSUVrMs9CPxjPAQRpOzva-AUoVZQ4Q")
         }
         applicationId "com.example.coronavirustracker"
         minSdkVersion 16
@@ -35,6 +35,7 @@ android {
 }
 
 dependencies {
+    implementation 'io.radar:sdk:3.0.0-beta.5'
     implementation 'com.google.firebase:firebase-core:17.2.3'
     implementation 'com.firebase:geofire-android:3.0.0'
     implementation 'com.google.firebase:firebase-database:19.2.1'

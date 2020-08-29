@@ -28,7 +28,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_api_key" />
+            android:value="AIzaSyCM1LSUVrMs9CPxjPAQRpOzva-AUoVZQ4Q" />
 
         <activity
             android:name=".MapsActivity"
@@ -46,7 +46,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <protected-broadcast android:name="com.motorola.motocare.INTENT_TRIGGER" />
 
 </manifest>

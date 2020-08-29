@@ -61,6 +61,14 @@ import com.google.maps.android.heatmaps.Gradient;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import io.radar.sdk.Radar;
+import io.radar.sdk.RadarTrackingOptions;
+import io.radar.sdk.model.RadarEvent;
+import io.radar.sdk.model.RadarUser;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -80,7 +88,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GeoFire geofire;
     private GoogleMap mMap;
     private boolean mLocationPermissionGranted = false;
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "TrackerActivity";
     private static final String TAGG = "cool";
     private Location lastLocation;
     private double currLatitude;
@@ -99,25 +107,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        Radar.initialize(this, "prj_test_pk_3b80b563e002d27a4680d259b7cc07e0299dd8ba");
 
-        if(checkMapServices()){
-            if(mLocationPermissionGranted){
-                getLocationPermission();
-            }
-        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        if(!mLocationPermissionGranted) {
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
-        }
+
         // Getting reference to database
         mDatabase = FirebaseDatabase.getInstance();
         mRef = mDatabase.getReference("Danger Location");
 
         userKey = getAlphaNumericString(15);
         userNode = getAlphaNumericString(13);
-
+        Radar.setUserId(userKey);
         // creates Geofire object around user's current location
         settingGeoFire();
     }
@@ -141,7 +144,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         Log.d(TAG, "onmapreadycalled");
         mMap = googleMap;
-        mMap.setMyLocationEnabled(true);
+        if(checkMapServices()){
+            if(!mLocationPermissionGranted){
+                getLocationPermission();
+            }
+        }
+            mMap.setMyLocationEnabled(true);
+
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
         // gets current location
@@ -154,6 +163,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onLocationResult(LocationResult locationResult) {
                 LocationResult = locationResult;currLatitude = locationResult.getLastLocation().getLatitude();
                 currLongitude = locationResult.getLastLocation().getLongitude();
+
+                //Tracking user's location using Radar API
+                Radar.trackOnce(new Radar.RadarTrackCallback() {
+                    @Override
+                    //Called when Radar Event occurs
+                    public void onComplete(@NotNull Radar.RadarStatus radarStatus, @Nullable Location location, @Nullable RadarEvent[] radarEvents, @Nullable RadarUser radarUser) {
+                        //check radarEvents isn't null
+                        if(radarEvents != null) {
+                            Log.d(TAG, "" + radarEvents[0].getType());
+
+                            //User is notified if they enter Coronavirus zone
+                            if(radarEvents[radarEvents.length - 1].getType() == RadarEvent.RadarEventType.USER_ENTERED_GEOFENCE) {
+                                sendNotification("Coronavirus Tracker", "You have entered a Coronavirus Zone:\n" +
+                                        radarEvents[radarEvents.length - 1].getGeofence().getDescription());
+                            }
+                            //User is notified if they exit Coronavirus zone
+                            if(radarEvents[radarEvents.length - 1].getType() == RadarEvent.RadarEventType.USER_EXITED_GEOFENCE) {
+                                sendNotification("Coronavirus Tracker", "You have exited a Coronavirus Zone");
+                            }
+                        }
+
+                    }
+                });
 
                 // sets the location user's geofire to current location
                 geofire.setLocation(userNode, new GeoLocation(currLatitude,
@@ -189,98 +221,105 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnCameraIdleListener(mClusterManager);
         mMap.setOnMarkerClickListener(mClusterManager);
 
-        // Adds all the cases of Coronavirus as markers on map
+      // Adds all the cases of Coronavirus as markers on map
         mRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds1 : dataSnapshot.getChildren()) {
-                    locationList = new ArrayList<>();
-                    for (DataSnapshot ds2 : ds1.getChildren()) {
-                        double lat, lon;
-                        String confirmed = ds2.child("Confirmed").getValue().toString();
-                        Double confirmedNum = Double.parseDouble(confirmed);
-                        float hue;
-                        lat = Double.parseDouble(ds2.child("Latitude").getValue().toString());
-                        lon = Double.parseDouble(ds2.child("Longitude").getValue().toString());
-                        LatLng loc = new LatLng(lat, lon);
-                    /*String description = "Country/Region: " +
-                            ds2.child("Country").getValue().toString();
-                    String snip = "State/Province: " + ds2.child("Province").getValue().toString()
-                            + "\n" + "Confirmed cases" + confirmed;
+                                       @Override
+                                       public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                           for (DataSnapshot ds1 : dataSnapshot.getChildren()) {
+                                               locationList = new ArrayList<>();
+                                               for (DataSnapshot ds2 : ds1.getChildren()) {
+                                                   double lat = 0.0, lon = 0.0;
+                                                   String confirmed = ds2.child("Confirmed").getValue().toString();
+                                                   Double confirmedNum = Double.parseDouble(confirmed);
+                                                   Log.d(TAG, ds2.child("Full Name").getValue().toString());
+                                                    if(!ds2.child("Latitude").getValue().toString().equals("")) {
+                                                        Log.d(TAG, ds2.child("Latitude").getValue().toString() + "Loopy");
+                                                        lat = Double.parseDouble(ds2.child("Latitude").getValue().toString());
+                                                        Log.d(TAG, ds2.child("Longitude").getValue().toString() + "Loop");
+                                                        lon = Double.parseDouble(ds2.child("Longitude").getValue().toString());
+                                                    }
+                                                   LatLng loc = new LatLng(lat, lon);
+                                                   String description = "Country/Region: " +
+                                                           ds2.child("Country").getValue().toString();
+                                                   String snip = "State/Province: " + ds2.child("Province").getValue().toString()
+                                                           + "\n" + "Confirmed cases" + confirmed;
 
-                 //setting color of marker based on number of confirmed cases
-                 if(confirmedNum >= 10 && confirmedNum < 100) {
-                        hue = 60f; // yellow
-                    } else if(confirmedNum >= 100 && confirmedNum < 1000) {
-                        hue = 30f; //orange
-                    } else if(confirmedNum >= 1000 && confirmedNum < 10000) {
-                        hue = 0f; // red
-                    } else if(confirmedNum >= 10000) {
-                        hue = 270f; // violet
-                    } else {
-                    hue = 120f; // green
-                }
+                                              //     setting color of marker based on number of confirmed cases
+                                                   float hue;
+                                                   if (confirmedNum >= 10 && confirmedNum < 100) {
+                                                       hue = 60f; // yellow
+                                                   } else if (confirmedNum >= 100 && confirmedNum < 1000) {
+                                                       hue = 30f; //orange
+                                                   } else if (confirmedNum >= 1000 && confirmedNum < 10000) {
+                                                       hue = 0f; // red
+                                                   } else if (confirmedNum >= 10000) {
+                                                       hue = 270f; // violet
+                                                   } else {
+                                                       hue = 120f; // green
+                                                   }
 
                     mMap.addMarker(new MarkerOptions()
                             .position(loc)
                             .title(description)
                             .snippet(snip)
                             .icon(BitmapDescriptorFactory.defaultMarker(hue)));
-                            */
-                    /* mMap.addCircle(new CircleOptions()
+
+                   mMap.addCircle(new CircleOptions()
                             .center(loc)
                             .radius(100)
                             .strokeColor(Color.BLACK)
                             .fillColor(Color.RED));
 
-                     // Adds all cases as clusters
-*/                      MyItem marker = new MyItem(lat, lon);
-                        mClusterManager.addItem(marker);
+                                                   // Adds all cases as clusters
+                                                   MyItem marker = new MyItem(lat, lon);
+                                                   mClusterManager.addItem(marker);
 
-                        locationList.add(new LatLng(lat, lon));
+                                                   locationList.add(new LatLng(lat, lon));
 
-                        // creates a Geoquery around each case location with 1km radius
-                        GeoQuery geoQuery = geofire.queryAtLocation(new GeoLocation(lat, lon), 1f);
-                        Log.d(TAG, currLatitude + "");
-                        geoQuery.addGeoQueryEventListener(MapsActivity.this);
-                    }
-                    int[] colors = {
+                                                   // creates a Geoquery around each case location with 1km radius
+                                                   GeoQuery geoQuery = geofire.queryAtLocation(new GeoLocation(lat, lon), 1f);
+                                                   Log.d(TAG, currLatitude + "");
+                                                   geoQuery.addGeoQueryEventListener(MapsActivity.this);
+                                               }
+                                               int[] colors = {
 
-                            Color.rgb(255, 0, 0),   // red
-                            Color.rgb(0, 96, 255), //blue
-                            Color.rgb(28,0,128), // purple
+                                                       Color.rgb(255, 0, 0),   // red
+                                                       Color.rgb(0, 96, 255), //blue
+                                                       Color.rgb(28, 0, 128), // purple
 
-                    };
+                                               };
 
-                    float[] startPoints = {
-                            0.8f, 0.9f ,1f
-                    };
+                                               float[] startPoints = {
+                                                       0.8f, 0.9f, 1f
+                                               };
 
-                    Gradient gradient = new Gradient(colors, startPoints);
+                                               Gradient gradient = new Gradient(colors, startPoints);
 
-                    mProvider = new HeatmapTileProvider.Builder()
-                            .data(locationList)
-                            .radius(20)
-                            .opacity(1.0)
-                            .gradient(gradient)
-                            .build();
-                    // Add a tile overlay to the map, using the heat map tile provider.
-                    mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
-                    mOverlay.setVisible(true);
-                }
-                // Create a heat map tile provider, passing it the latlngs
+                                               mProvider = new HeatmapTileProvider.Builder()
+                                                       .data(locationList)
+                                                       .radius(20)
+                                                       .opacity(1.0)
+                                                       .gradient(gradient)
+                                                       .build();
+                                               // Add a tile overlay to the map, using the heat map tile provider.
+                                               mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+                                               mOverlay.setVisible(true);
+                                           }
+                                           // Create a heat map tile provider, passing it the latlngs
 
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currLatitude, currLongitude), 0.5f));
+                                           mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currLatitude, currLongitude), 0.5f));
 
-            }
-            @Override
-            public void onCancelled (@NonNull DatabaseError databaseError){
 
-            }
-        });
+                                       }
+
+                                       @Override
+                                       public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                       }
+                                   });
     }
 
-    // creates notification based on user's location with respect to virus's locations
+            // creates notification based on user's location with respect to virus's locations
     private void sendNotification(String title, String format) {
         String NOTIFICATION_CHANNEL_ID = "coronavirus_tracker";
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -301,6 +340,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         builder.setContentTitle(title)
                 .setContentText(format)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(format))
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
                 .setAutoCancel(false);
@@ -457,8 +498,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return sb.toString();
     }
 
-    private void addHeatMap() {
-
-    }
 
 }
+
+
