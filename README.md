@@ -6,7 +6,7 @@
 * [Launch](#launch)
 * [Requirements](#requirements)
 * [Usage](#usage)
-* [Video Demo](#video demo)
+* [Video Demo](#demo)
 * [Contributing](#contributing)
 * [Links](#links)
 
@@ -45,7 +45,7 @@ If the user walks within a 1 kilometer radius of a reported Coronavirus case, a 
   <img width="460" height="900" src="https://user-images.githubusercontent.com/55412165/77965219-90f3e380-72ae-11ea-80a9-7c927811386a.PNG">
 </p>
 
-## Video Demo
+## Demo
 
 Here is a video demo of the app in action!
 
