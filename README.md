@@ -44,6 +44,12 @@ If the user walks within a 1 kilometer radius of a reported Coronavirus case, a 
   <img width="460" height="900" src="https://user-images.githubusercontent.com/55412165/77965219-90f3e380-72ae-11ea-80a9-7c927811386a.PNG">
 </p>
 
+## Video Demo
+
+Here is a video demo of the app in action!
+
+[Video](https://www.youtube.com/watch?v=-cEClX7vh5Q)
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
