@@ -6,6 +6,7 @@
 * [Launch](#launch)
 * [Requirements](#requirements)
 * [Usage](#usage)
+* [Video Demo](#video demo)
 * [Contributing](#contributing)
 * [Links](#links)
 
